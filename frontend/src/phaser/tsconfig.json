@@ -26,4 +26,7 @@
     "src",
     ".eslintrc.cjs"
   ],
+  "exclude": [
+    "src/shims"
+  ],
 }

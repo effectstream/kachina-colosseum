@@ -1,0 +1,44 @@
+{
+  "name": "kachina-colosseum",
+  "private": true,
+  "workspaces": [
+    "backend/packages/*",
+    "frontend/src/contract",
+    "frontend/src/api",
+    "frontend/src/phaser",
+    "backend/packages/midnight/contract-pvp",
+    "backend/packages/midnight/contract-token-mint"
+  ],
+  "effectstream": {
+    "default": "start.dev.ts"
+  },
+  "scripts": {
+    "check": "bun x tsc --noEmit -p tsconfig.check.json",
+    "dev": "EFFECTSTREAM_ENV=dev bunx orchestrator start start.dev.ts --port 4748",
+    "dev:stop": "bunx orchestrator stop --port 4748",
+    "testnet": "EFFECTSTREAM_ENV=testnet bunx orchestrator start start.testnet.ts --port 4748",
+    "mainnet": "EFFECTSTREAM_ENV=mainnet bunx orchestrator start start.mainnet.ts --port 4748",
+    "build:midnight": "bun run --filter @pvp-arena-backend/contract-pvp compact",
+    "build:frontend": "bun run build:midnight && bun run --filter @midnight-ntwrk/pvp-contract build && bun run --filter @midnight-ntwrk/pvp-api build",
+    "batcher:start": "bun run --filter @pvp-arena-backend/batcher start",
+    "postinstall": "./patch.sh"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.3.14",
+    "@effectstream/db": "0.100.21",
+    "@effectstream/midnight-contracts": "0.100.21",
+    "@effectstream/orchestrator": "0.100.21",
+    "wait-on": "8.0.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.13",
+    "typescript": "~5.9.3"
+  },
+  "overrides": {
+    "@effect/platform": "0.96.1",
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
+    "@midnight-ntwrk/onchain-runtime-v3": "3.0.0",
+    "@midnight-ntwrk/zswap": "^4.0.0",
+    "hardhat": "3.9.0"
+  }
+}

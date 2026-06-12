@@ -13,7 +13,8 @@
  *   transfer --from <name> --to <address> --amount <n> Transfer NIGHT tokens
  */
 
-import { parseArgs } from "jsr:@std/cli@1/parse-args";
+import { parseArgs } from "node:util";
+import { readFileSync, writeFileSync } from "node:fs";
 import * as bip39 from "npm:@scure/bip39@1";
 import { wordlist as english } from "npm:@scure/bip39@1/wordlists/english";
 import { Buffer } from "node:buffer";
@@ -21,16 +22,16 @@ import { setNetworkId } from "npm:@midnight-ntwrk/midnight-js-network-id@4.0.0-r
 import { nativeToken, UnprovenTransaction } from "npm:@midnight-ntwrk/ledger-v8@8.0.2";
 import { MidnightBech32m, UnshieldedAddress } from "npm:@midnight-ntwrk/wallet-sdk-address-format@3.1.0-rc.0";
 
-import { midnightNetworkConfig } from "jsr:@paimaexample/midnight-contracts/midnight-env";
+import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
 import {
   buildWalletFacade,
   getInitialShieldedState,
   syncAndWaitForFunds,
   type WalletResult,
-} from "jsr:@paimaexample/midnight-contracts";
+  resolveWalletSyncTimeoutMs,
+} from "@effectstream/midnight-contracts";
 
 import type { WalletFacade } from "npm:@midnight-ntwrk/wallet-sdk-facade@3.0.1";
-import { resolveWalletSyncTimeoutMs } from "jsr:@paimaexample/midnight-contracts";
 import * as Rx from "npm:rxjs";
 
 export async function waitForUnshieldedFunds(
@@ -94,7 +95,7 @@ interface StoredWallet {
 
 function loadWallets(): StoredWallet[] {
   try {
-    const data = Deno.readTextFileSync(WALLETS_FILE);
+    const data = readFileSync(WALLETS_FILE, "utf8");
     return JSON.parse(data);
   } catch {
     return [];
@@ -102,7 +103,7 @@ function loadWallets(): StoredWallet[] {
 }
 
 function saveWallets(wallets: StoredWallet[]): void {
-  Deno.writeTextFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2) + "\n");
+  writeFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2) + "\n");
 }
 
 async function mnemonicToSeed(mnemonic: string): Promise<string> {
@@ -130,7 +131,7 @@ async function requireProofServer(): Promise<void> {
   } catch {
     console.error(`Proof server not running at ${NETWORK.proofServer}`);
     console.error(`Start it with: LEDGER_NETWORK_ID=preprod packages/binaries/midnight-proof-server/proof-server/midnight-proof-server`);
-    Deno.exit(1);
+    process.exit(1);
   }
 }
 
@@ -174,7 +175,7 @@ async function cmdCreate(name?: string): Promise<void> {
 
   if (wallets.find((w) => w.name === label)) {
     console.error(`Wallet "${label}" already exists.`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   const mnemonic = bip39.generateMnemonic(english, 256); // 24 words
@@ -197,12 +198,12 @@ async function cmdImport(args: { mnemonic?: string; file?: string; name?: string
   let mnemonic: string;
 
   if (args.file) {
-    mnemonic = Deno.readTextFileSync(args.file).trim();
+    mnemonic = readFileSync(args.file, "utf8").trim();
   } else if (args.mnemonic) {
     mnemonic = args.mnemonic.trim();
   } else {
     console.error("Provide --mnemonic or --file");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   const seed = await mnemonicToSeed(mnemonic);
@@ -211,13 +212,13 @@ async function cmdImport(args: { mnemonic?: string; file?: string; name?: string
 
   if (wallets.find((w) => w.name === label)) {
     console.error(`Wallet "${label}" already exists.`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   // Check if same seed already imported
   if (wallets.find((w) => w.seed === seed)) {
     console.error("This mnemonic is already imported.");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   wallets.push({ name: label, mnemonic, seed, createdAt: new Date().toISOString() });
@@ -340,7 +341,7 @@ async function cmdBalance(name?: string): Promise<void> {
   const targets = name ? wallets.filter((w) => w.name === name) : wallets;
   if (targets.length === 0) {
     console.error(`Wallet "${name}" not found.`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   initNetwork();
@@ -375,7 +376,7 @@ async function cmdBalance(name?: string): Promise<void> {
 async function cmdTransfer(args: { from: string; to: string; amount: string }): Promise<void> {
   if (!args.from || !args.to || !args.amount) {
     console.error("Usage: transfer --from <name> --to <address> --amount <NIGHT>");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   await requireProofServer();
@@ -385,7 +386,7 @@ async function cmdTransfer(args: { from: string; to: string; amount: string }): 
   const sender = wallets.find((w) => w.name === args.from);
   if (!sender) {
     console.error(`Wallet "${args.from}" not found.`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   initNetwork();
@@ -455,7 +456,7 @@ async function cmdTransfer(args: { from: string; to: string; amount: string }): 
 async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
   if (!args.name) {
     console.error("Usage: delegate --name <wallet> [--to <dust-address>]");
-    Deno.exit(1);
+    process.exit(1);
   }
 
   await requireProofServer();
@@ -464,7 +465,7 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
   const wallet = wallets.find((w) => w.name === args.name);
   if (!wallet) {
     console.error(`Wallet "${args.name}" not found.`);
-    Deno.exit(1);
+    process.exit(1);
   }
 
   // If --to is a wallet name (not a dust address), resolve it
@@ -594,13 +595,14 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
 // Main
 // ============================================================================
 
-if (!Deno.env.get("MIDNIGHT_NETWORK_ID")) {
+if (!process.env.MIDNIGHT_NETWORK_ID) {
   console.error("MIDNIGHT_NETWORK_ID is required. Example:");
   console.error("  MIDNIGHT_NETWORK_ID=preprod deno run -A wallet-cli.ts <command>");
-  Deno.exit(1);
+  process.exit(1);
 }
 
-const args = parseArgs(Deno.args, {
+const args = parseArgs({
+  args: process.argv.slice(2),
   string: ["name", "mnemonic", "file", "from", "to", "amount"],
 });
 

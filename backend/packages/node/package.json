@@ -1,0 +1,40 @@
+{
+  "name": "@pvp-arena-backend/node",
+  "version": "0.3.23",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./main.dev.ts"
+  },
+  "scripts": {
+    "check": "bun x tsc --noEmit -p tsconfig.check.json",
+    "check:dev": "bun x tsc --noEmit -p tsconfig.check.json",
+    "check:testnet": "bun x tsc --noEmit -p tsconfig.check.json",
+    "check:mainnet": "bun x tsc --noEmit -p tsconfig.check.json",
+    "node:start:dev": "bun --inspect run main.dev.ts",
+    "node:start:testnet": "bun --inspect run main.testnet.ts",
+    "node:start:mainnet": "bun --inspect run main.mainnet.ts",
+    "dev": "cd ../.. && EFFECTSTREAM_ENV=dev bunx orchestrator start start.dev.ts --port 4748",
+    "testnet": "cd ../.. && EFFECTSTREAM_ENV=testnet bunx orchestrator start start.testnet.ts --port 4748",
+    "mainnet": "cd ../.. && EFFECTSTREAM_ENV=mainnet bunx orchestrator start start.mainnet.ts --port 4748"
+  },
+  "dependencies": {
+    "@effectstream/concise": "0.100.21",
+    "@effectstream/config": "0.100.21",
+    "@effectstream/coroutine": "0.100.21",
+    "@effectstream/db": "0.100.21",
+    "@effectstream/log": "0.100.21",
+    "@effectstream/midnight-contracts": "0.100.21",
+    "@effectstream/orchestrator": "0.100.21",
+    "@effectstream/runtime": "0.100.21",
+    "@effectstream/sm": "0.100.21",
+    "@effectstream/utils": "0.100.21",
+    "@midnight-ntwrk/compact-runtime": "0.15.0",
+    "@midnight-ntwrk/ledger-v8": "8.0.3",
+    "@midnight-ntwrk/wallet-sdk-address-format": "3.1.0",
+    "@pvp-arena-backend/midnight-contracts": "workspace:*",
+    "@sinclair/typebox": "^0.34.30",
+    "effection": "^3.5.0",
+    "viem": "2.37.3"
+  }
+}

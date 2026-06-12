@@ -1,10 +1,10 @@
-import "./instrument";  // Sentry — must be first import
+import './globals';
+import "./instrument";  // Sentry — must run after globals
 
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 import '@midnight-ntwrk/dapp-connector-api';
 import { ITEM, RESULT, STANCE, Hero, ARMOR, pureCircuits, GAME_STATE } from '@midnight-ntwrk/pvp-contract';
 import { type PVPArenaDerivedState, type DeployedPVPArenaAPI, PVPArenaAPI } from '@midnight-ntwrk/pvp-api';
-import './globals';
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 import { LedgerState } from '@midnight-ntwrk/ledger-v8';
 import { UnshieldedAddress, MidnightBech32m } from '@midnight-ntwrk/wallet-sdk-address-format';

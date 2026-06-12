@@ -1,0 +1,28 @@
+{
+  "extends": "./backend/packages/node/tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@effectstream/concise": ["./backend/packages/node/types/effectstream/concise.d.ts"],
+      "@effectstream/config": ["./backend/packages/node/types/effectstream/config.d.ts"],
+      "@effectstream/coroutine": ["./backend/packages/node/types/effectstream/coroutine.d.ts"],
+      "@effectstream/db": ["./backend/packages/node/types/effectstream/db.d.ts"],
+      "@effectstream/db/version": ["./backend/packages/node/types/effectstream/db-version.d.ts"],
+      "@effectstream/runtime": ["./backend/packages/node/types/effectstream/runtime.d.ts"],
+      "@effectstream/sm": ["./backend/packages/node/types/effectstream/sm.d.ts"],
+      "@effectstream/sm/builtin": ["./backend/packages/node/types/effectstream/sm-builtin.d.ts"],
+      "@effectstream/sm/grammar": ["./backend/packages/node/types/effectstream/sm-grammar.d.ts"],
+      "@effectstream/utils": ["./backend/packages/node/types/effectstream/utils.d.ts"],
+      "@effectstream/midnight-contracts/read-contract": ["./backend/packages/node/types/effectstream/midnight-read-contract.d.ts"],
+      "@effectstream/midnight-contracts/midnight-env": ["./backend/packages/node/types/effectstream/midnight-env.d.ts"],
+      "@pvp-arena-backend/midnight-contracts/pvp": ["./backend/packages/node/types/pvp-contract.d.ts"],
+      "@midnight-ntwrk/wallet-sdk-address-format": ["./node_modules/@midnight-ntwrk/wallet-sdk-address-format/dist/index.d.ts"]
+    }
+  },
+  "include": [
+    "backend/packages/node/main.dev.ts",
+    "backend/packages/node/main.testnet.ts",
+    "backend/packages/node/main.mainnet.ts",
+    "backend/packages/node/types/**/*.d.ts"
+  ]
+}
