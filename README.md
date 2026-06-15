@@ -5,32 +5,39 @@ Kachina Kolosseum is a blockchain-based turn-based PvP battle game built on the 
 ## Repository Structure
 
 ```
-pvp-v2/
-├── frontend/               # Yarn monorepo
+kachina-colosseum/
+├── package.json            # Bun workspace root (backend + frontend packages)
+├── bun.lock
+├── frontend/
 │   └── src/
 │       ├── contract/       # Compact DSL smart contract + compiled ZK output
 │       ├── api/            # TypeScript layer for contract interaction (PVPArenaAPI)
 │       └── phaser/         # Phaser 3 browser game UI (scenes, wallet, batcher client)
-└── backend/                # Deno workspace
+└── backend/
     └── packages/
         ├── midnight/       # Contract deployment, local Midnight chain, faucet
-        ├── node/           # Paima effectstream runtime (syncs on-chain state)
-        └── batcher/        # Party B HTTP service — balances & proves delegated txs
+        ├── node/           # EffectStream runtime (syncs on-chain state)
+        └── batcher/        # Transaction batcher (Midnight balancing)
 ```
 
 ## Prerequisites
 
-- **Deno**
-- **Node.js** + **Yarn 4.1.0**: `corepack enable && corepack install --global yarn@4.1.0`
+- **Bun** — [https://bun.sh](https://bun.sh)
 - **Compact compiler v0.30.0** — install the correct binaries from Midnight docs
 
 ## Local Development
 
+Install dependencies once from the repo root:
+
+```bash
+bun install
+```
+
 ### Terminal 1 — Backend
 
 ```bash
-cd backend
-deno task -f @pvp-arena-backend/contract-pvp compact && deno task -f @pvp-arena-backend/node dev
+bun run build:midnight   # first time, or after contract changes
+bun run dev
 ```
 
 Wait until you see `finalized block {1}`, `finalized block {2}`, … before starting the frontend.
@@ -38,12 +45,11 @@ Wait until you see `finalized block {1}`, `finalized block {2}`, … before star
 ### Terminal 2 — Frontend
 
 ```bash
-cd frontend/src/contract && yarn install && npm run build
-cd ../api && yarn install && npm run build
-cd ../phaser && yarn install && npm run build-undeployed && npm run preview
+bun run build:frontend   # first time, or after contract/api changes
+bun run --filter pvp-phaser dev
 ```
 
-The game will be available at `http://localhost:4173/`.
+The game will be available at `http://localhost:5173/`.
 
 ## Smart Contract
 
@@ -118,15 +124,17 @@ These are stateless helper functions used by the UI and internally by the combat
 
 ```sh
 # Start Proof Server
-deno task -f @pvp-arena-backend/midnight-contracts midnight-proof-server:start
+bun run --filter @pvp-arena-backend/midnight-contracts midnight-proof-server:start
 
 # Deploy Contracts
-MIDNIGHT_WALLET_MNEMONIC="word1 ... word12" MIDNIGHT_NETWORK_ID=preprod MIDNIGHT_STORAGE_PASSWORD=YourPasswordMy1! deno task -f @pvp-arena-backend/midnight-contracts midnight-contract:deploy
+MIDNIGHT_WALLET_MNEMONIC="word1 ... word12" MIDNIGHT_NETWORK_ID=preprod MIDNIGHT_STORAGE_PASSWORD=YourPasswordMy1! \
+  bun run --filter @pvp-arena-backend/midnight-contracts contract-pvp:deploy:testnet
 ```
 
-Once you have the contract address, you need to patch the frontend.
+Once you have the contract address, patch the frontend:
+
 ```sh
-deno task -f @pvp-arena-backend/midnight-contracts contract-pvp:patch-frontend:testnet
+bun run --filter @pvp-arena-backend/midnight-contracts contract-pvp:patch-frontend:testnet
 ```
 
 Now you can start the backend service.
@@ -167,12 +175,13 @@ and update
 Your DB must be running.
 
 ```sh
-deno task -f @pvp-arena-backend/node testnet
+bun run testnet
 ```
 
-Now your frontend 
+Frontend (testnet build):
+
 ```sh
-cd frontend/src/contract && yarn install && npm run build
-cd ../api && yarn install && npm run build
-cd ../phaser && yarn install && npm run build-testnet && npm run preview
+bun run build:frontend
+bun run --filter pvp-phaser build-testnet
+bun run --filter pvp-phaser preview
 ```

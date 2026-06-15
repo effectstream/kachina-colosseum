@@ -1,10 +1,10 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env bun
 /**
  * Creates a new Midnight wallet and prints its shielded address.
  *
  * Usage:
- *   MIDNIGHT_NETWORK_ID=preprod deno run -A create-wallet.ts
- *   MIDNIGHT_NETWORK_ID=undeployed deno run -A create-wallet.ts
+ *   MIDNIGHT_NETWORK_ID=preprod bun run backend/create-wallet.ts
+ *   MIDNIGHT_NETWORK_ID=undeployed bun run backend/create-wallet.ts
  *
  * Env vars:
  *   MIDNIGHT_NETWORK_ID  — "undeployed" | "preprod" | "testnet" | "mainnet" (default: "undeployed")

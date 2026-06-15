@@ -20,6 +20,7 @@
     "mainnet": "EFFECTSTREAM_ENV=mainnet bunx orchestrator start start.mainnet.ts --port 4748",
     "build:midnight": "bun run --filter @pvp-arena-backend/contract-pvp compact",
     "build:frontend": "bun run build:midnight && bun run --filter @midnight-ntwrk/pvp-contract build && bun run --filter @midnight-ntwrk/pvp-api build",
+    "dev:frontend": "bun run --filter pvp-phaser dev",
     "batcher:start": "bun run --filter @pvp-arena-backend/batcher start",
     "postinstall": "./patch.sh"
   },

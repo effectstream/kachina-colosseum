@@ -667,7 +667,6 @@ export const apiRouter: StartConfigApiRouter = async function (
 // Node startup — called by env-specific entry points (main.dev.ts, etc.)
 // ---------------------------------------------------------------------------
 
-// deno-lint-ignore no-explicit-any
 export function startNode(envConfig: any): void {
   main(function* () {
     yield* init();

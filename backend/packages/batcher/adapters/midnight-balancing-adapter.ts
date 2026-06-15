@@ -241,7 +241,6 @@ export class MidnightBalancingAdapter
     // we can safely make (one UTXO is spent per balancing call).
     try {
       const dustState = await getInitialDustState(
-        // deno-lint-ignore no-explicit-any
         (this.walletResult.wallet as any).dust,
       );
 
@@ -252,7 +251,6 @@ export class MidnightBalancingAdapter
         return value;
       };
 
-      // deno-lint-ignore no-explicit-any
       this.availableDustUtxoCount = dustState.availableCoins?.length ?? null;
       this.log.log(`Dust state: ${JSON.stringify(dustState.availableCoins, bigintSerializer)}`);
       this.log.log(`Available dust UTXOs: ${this.availableDustUtxoCount ?? "unknown"}`);
@@ -449,7 +447,6 @@ export class MidnightBalancingAdapter
     // Ensure dust wallet has up-to-date state (including generationInfo for coins)
     // before attempting to balance. Without this, balanceTransactions may read stale
     // state where generationInfo hasn't been populated, causing "No dust found".
-    // deno-lint-ignore no-explicit-any
     await (this.walletResult!.wallet as any).dust.waitForSyncedState();
 
     const keys = {
@@ -543,7 +540,6 @@ export class MidnightBalancingAdapter
     const keys = this.walletResult.walletZswapSecretKeys;
     
     // Get the shielded address as a ShieldedAddress object (required by transferTransaction)
-    // deno-lint-ignore no-explicit-any
     const initialState = await getInitialShieldedState((this.walletResult.wallet as any).shielded);
     const receiverAddress = initialState.address;
     if (!this.config.shieldedPaddingTokenID) {

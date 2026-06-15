@@ -16,7 +16,7 @@
     "@midnight-ntwrk/compact-runtime": "0.15.0"
   },
   "scripts": {
-    "compact": "echo 'Contract is compiled by the backend. Run deno task build:midnight from backend/ first.'",
+    "compact": "echo 'Contract is compiled by the backend. Run bun run build:midnight from the repo root first.'",
     "test": "jest --passWithNoTests",
     "prepack": "yarn build",
     "build": "rm -rf dist && tsc --project tsconfig.build.json && cp -Rf ./src/managed ./dist/managed && cp ./src/pvp.compact ./dist",
