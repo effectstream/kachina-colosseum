@@ -8,6 +8,14 @@
   "module": "./dist/index.js",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "test": "yarn test-api",
     "test-api": "DEBUG='testcontainers' NODE_OPTIONS=--experimental-vm-modules jest  --detectOpenHandles --forceExit",
@@ -15,8 +23,13 @@
     "lint": "eslint src"
   },
   "dependencies": {
+    "@midnight-ntwrk/compact-js": "2.5.0",
+    "@midnight-ntwrk/compact-runtime": "0.15.0",
+    "@midnight-ntwrk/midnight-js-contracts": "4.0.2",
+    "@midnight-ntwrk/midnight-js-types": "4.0.2",
     "@midnight-ntwrk/pvp-contract": "workspace:*",
     "pino": "^8.16.1",
+    "rxjs": "^7.8.1",
     "ws": "^8.14.2"
   },
   "devDependencies": {

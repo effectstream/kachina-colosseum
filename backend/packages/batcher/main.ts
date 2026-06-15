@@ -1,17 +1,26 @@
 import { main, suspend } from "effection";
-import { createNewBatcher } from "@paimaexample/batcher";
+import { createNewBatcher } from "@effectstream/batcher-sdk";
 import { config, storage, validateAndPrintBatcherEnv } from "./config.ts";
+import { midnightBalancingAdapter } from "./adapter-midnight-balancing.ts";
 
 validateAndPrintBatcherEnv();
 const batcher = createNewBatcher(config, storage);
+const batchIntervalMs = 1000;
+
+batcher
+  .addBlockchainAdapter("midnight_balancing", midnightBalancingAdapter, {
+    criteriaType: "time",
+    timeWindowMs: batchIntervalMs,
+  })
+  .setDefaultTarget("midnight_balancing");
 
 main(function* () {
-  console.log("🚀 Starting EVM Midnight Template Batcher...");
+  console.log("🚀 Starting PVP Arena Batcher...");
 
   try {
     batcher.addStateTransition("startup", ({ publicConfig }) => {
       const banner =
-        `🧱 EVM Midnight Template Batcher startup - polling every ${publicConfig.pollingIntervalMs} ms\n` +
+        `🧱 PVP Arena Batcher startup - polling every ${publicConfig.pollingIntervalMs} ms\n` +
         `      | 📍 Default Target: ${publicConfig.defaultTarget}\n` +
         `      | ⛓️ Blockchain Adapter Targets: ${
           publicConfig.adapterTargets.join(", ")
@@ -28,7 +37,7 @@ main(function* () {
       const publicConfig = batcher.getPublicConfig();
       const httpInfo = `🌐 HTTP Server ready\n` +
         `      | URL: http://localhost:${port}\n` +
-        `      | Confirmation: ${publicConfig.confirmationLevel}\n` +
+        `      | Confirmation: ${JSON.stringify(publicConfig.confirmationLevel)}\n` +
         `      | Events Enabled: ${publicConfig.enableEventSystem}\n` +
         `      | Polling: ${publicConfig.pollingIntervalMs} ms`;
       console.log(httpInfo);

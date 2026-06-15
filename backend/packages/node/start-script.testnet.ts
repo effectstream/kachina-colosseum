@@ -1,14 +1,12 @@
 import {
   OrchestratorConfig,
   start,
-} from "@paimaexample/orchestrator";
-import { ComponentNames } from "@paimaexample/log";
+} from "@effectstream/orchestrator";
+import { ComponentNames } from "@effectstream/log";
 import { Value } from "@sinclair/typebox/value";
 
-// Testnet: no local Midnight services (node/indexer/proof-server).
-// Only EffectStream DB + Batcher are launched locally.
 const config = Value.Parse(OrchestratorConfig, {
-  packageName: "@paimaexample",
+  packageName: "@effectstream",
   logs: "stdout",
   processes: {
     [ComponentNames.EFFECTSTREAM_PGLITE]: false,
@@ -20,7 +18,7 @@ const config = Value.Parse(OrchestratorConfig, {
   processesToLaunch: [
     {
       name: "batcher",
-      args: ["task", "-f", "@pvp-arena-backend/batcher", "start"],
+      args: ["run", "--filter", "@pvp-arena-backend/batcher", "start"],
       env: {
         MIDNIGHT_NETWORK_ID: "preprod",
       },

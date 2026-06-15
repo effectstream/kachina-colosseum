@@ -3,6 +3,10 @@ import { toHex } from "@midnight-ntwrk/compact-runtime";
 // Use env var if available (e.g. testnet), fall back to localhost for local dev.
 const DEFAULT_BATCHER_URL = import.meta.env.VITE_BATCHER_MODE_BATCHER_URL || "http://localhost:3334";
 
+// Security namespace — must match batcher BatcherConfig.namespace and node
+// setSecurityNamespace("epvp-arena"). Used when signing EVM batcher inputs.
+export const SECURITY_NAMESPACE = "pvp-arena";
+
 /** Sentinel message thrown by balanceTx when the delegation hook intercepts the transaction. */
 export const DELEGATED_SENTINEL = "Delegated balancing flow handed off to batcher";
 

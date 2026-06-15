@@ -3,31 +3,32 @@ import {
   start,
   type StartConfigApiRouter,
   type StartConfigGameStateTransitions,
-} from "@paimaexample/runtime";
+} from "@effectstream/runtime";
 import { main, suspend } from "effection";
 import {
   toSyncProtocolWithNetwork,
   withEffectstreamStaticConfig,
-} from "@paimaexample/config";
+} from "@effectstream/config";
 import {
   ConfigBuilder,
   ConfigNetworkType,
   ConfigSyncProtocolType,
-} from "@paimaexample/config";
-import type { GrammarDefinition } from "@paimaexample/concise";
-import { type SyncStateUpdateStream, World } from "@paimaexample/coroutine";
-import { PaimaSTM } from "@paimaexample/sm";
-import type { BaseStfInput } from "@paimaexample/sm";
-import { newScheduledTimestampData } from "@paimaexample/db";
-import { AddressType } from "@paimaexample/utils";
+} from "@effectstream/config";
+import type { GrammarDefinition } from "@effectstream/concise";
+import { type SyncStateUpdateStream, World } from "@effectstream/coroutine";
+import { Stm } from "@effectstream/sm";
+import type { BaseStfInput } from "@effectstream/sm";
+import { newScheduledTimestampData } from "@effectstream/db";
+import { AddressType } from "@effectstream/utils";
 import { Type } from "@sinclair/typebox";
 import {
   midnightNetworkConfig,
-} from "@paimaexample/midnight-contracts/midnight-env";
-import { PrimitiveTypeMidnightGeneric, PrimitiveTypeUtxorpcGeneric } from "@paimaexample/sm/builtin";
-import { readMidnightContract } from "@paimaexample/midnight-contracts/read-contract";
-import * as path from "@std/path";
-import { builtinGrammars } from "@paimaexample/sm/grammar";
+} from "@effectstream/midnight-contracts/midnight-env";
+import { PrimitiveTypeMidnightGeneric } from "@effectstream/sm/builtin";
+import { readMidnightContract } from "@effectstream/midnight-contracts/read-contract";
+import * as path from "node:path";
+import { builtinGrammars } from "@effectstream/sm/grammar";
+import { spawn } from "node:child_process";
 import { valueToBigInt } from "@midnight-ntwrk/compact-runtime";
 import {
   ensureTables,
@@ -114,70 +115,70 @@ export function validateAndPrintNodeEnv(): void {
     {
       name: "MIDNIGHT_NETWORK_ID",
       value: networkId,
-      isSet: !!Deno.env.get("MIDNIGHT_NETWORK_ID"),
+      isSet: !!process.env.MIDNIGHT_NETWORK_ID,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_WALLET_SEED",
-      value: Deno.env.get("MIDNIGHT_WALLET_SEED") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_WALLET_SEED"),
+      value: process.env.MIDNIGHT_WALLET_SEED ?? "",
+      isSet: !!process.env.MIDNIGHT_WALLET_SEED,
       secret: true,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_WALLET_MNEMONIC",
-      value: Deno.env.get("MIDNIGHT_WALLET_MNEMONIC") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_WALLET_MNEMONIC")?.trim(),
+      value: process.env.MIDNIGHT_WALLET_MNEMONIC ?? "",
+      isSet: !!process.env.MIDNIGHT_WALLET_MNEMONIC?.trim(),
       secret: true,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_INDEXER_HTTP",
       value: midnightNetworkConfig.indexer,
-      isSet: !!Deno.env.get("MIDNIGHT_INDEXER_HTTP"),
+      isSet: !!process.env.MIDNIGHT_INDEXER_HTTP,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_INDEXER_WS",
       value: midnightNetworkConfig.indexerWS,
-      isSet: !!Deno.env.get("MIDNIGHT_INDEXER_WS"),
+      isSet: !!process.env.MIDNIGHT_INDEXER_WS,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_NODE_HTTP",
       value: midnightNetworkConfig.node,
-      isSet: !!Deno.env.get("MIDNIGHT_NODE_HTTP"),
+      isSet: !!process.env.MIDNIGHT_NODE_HTTP,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_PROOF_SERVER_URL",
       value: midnightNetworkConfig.proofServer,
-      isSet: !!(Deno.env.get("MIDNIGHT_PROOF_SERVER_URL") || Deno.env.get("MIDNIGHT_PROOF_SERVER")),
+      isSet: !!(process.env.MIDNIGHT_PROOF_SERVER_URL || process.env.MIDNIGHT_PROOF_SERVER),
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_BACKEND_SECRET",
-      value: Deno.env.get("MIDNIGHT_BACKEND_SECRET") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_BACKEND_SECRET"),
+      value: process.env.MIDNIGHT_BACKEND_SECRET ?? "",
+      isSet: !!process.env.MIDNIGHT_BACKEND_SECRET,
       secret: true,
       requiredWhenDeployed: true,
     },
     {
       name: "MIDNIGHT_CLEAN_SEED",
-      value: Deno.env.get("MIDNIGHT_CLEAN_SEED") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_CLEAN_SEED"),
+      value: process.env.MIDNIGHT_CLEAN_SEED ?? "",
+      isSet: !!process.env.MIDNIGHT_CLEAN_SEED,
       secret: true,
       requiredWhenDeployed: true,
     },
     {
       name: "BATCHER_URL",
-      value: Deno.env.get("BATCHER_URL") || "http://localhost:3334",
-      isSet: !!Deno.env.get("BATCHER_URL"),
+      value: process.env.BATCHER_URL || "http://localhost:3334",
+      isSet: !!process.env.BATCHER_URL,
       secret: false,
       requiredWhenDeployed: false,
     },
@@ -193,7 +194,7 @@ export function validateAndPrintNodeEnv(): void {
 
   if (isDeployed && errors.length > 0) {
     for (const err of errors) console.error(err);
-    Deno.exit(1);
+    process.exit(1);
   }
 }
 
@@ -299,7 +300,7 @@ async function waitForDb() {
 // preventing concurrent writes across consecutive blocks.
 let dbQueue = Promise.resolve();
 
-const stm = new PaimaSTM<typeof grammar, {}>(grammar);
+const stm = new Stm<typeof grammar, {}>(grammar);
 stm.addStateTransition("midnightContractState", function* (data) {
   // NOTE This will change if there are changes in the contract pvp.compact
   const { payload } = data.parsedInput;
@@ -546,25 +547,24 @@ stm.addStateTransition("clean_up_game", function* (data) {
 
       
       const scriptPath = path.resolve(import.meta.dirname!, "..", "midnight", "contract-pvp-cleanup.ts");
-      const command = new Deno.Command("deno", {
-        args: ["run", "-A", "--unstable-detect-cjs", scriptPath, game_id],
+      const child = spawn("bun", ["run", scriptPath, game_id], {
         env: {
-          MIDNIGHT_BACKEND_SECRET: Deno.env.get("MIDNIGHT_BACKEND_SECRET") || "",
-          MIDNIGHT_CLEAN_SEED: Deno.env.get("MIDNIGHT_CLEAN_SEED") || "",
-          MIDNIGHT_NETWORK_ID: Deno.env.get("MIDNIGHT_NETWORK_ID") || "",
-          BATCHER_URL: Deno.env.get("BATCHER_URL") || "",
+          ...process.env,
+          MIDNIGHT_BACKEND_SECRET: process.env.MIDNIGHT_BACKEND_SECRET || "",
+          MIDNIGHT_CLEAN_SEED: process.env.MIDNIGHT_CLEAN_SEED || "",
+          MIDNIGHT_NETWORK_ID: process.env.MIDNIGHT_NETWORK_ID || "",
+          BATCHER_URL: process.env.BATCHER_URL || "",
         },
-        stdout: "inherit",
-        stderr: "inherit",
+        stdio: "inherit",
       });
-      const child = command.spawn();
-      child.status.then((status) => {
-        if (status.success) {
+      child.on("close", (code) => {
+        if (code === 0) {
           console.log(`[clean_up_game] cleanup script succeeded for game_id=${game_id}`);
         } else {
-          console.error(`[clean_up_game] cleanup script exited with code ${status.code} for game_id=${game_id}`);
+          console.error(`[clean_up_game] cleanup script exited with code ${code} for game_id=${game_id}`);
         }
-      }).catch((err) => {
+      });
+      child.on("error", (err) => {
         console.error(`[clean_up_game] cleanup script status error for game_id=${game_id}:`, err);
       });
     } catch (err) {

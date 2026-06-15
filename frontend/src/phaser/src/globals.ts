@@ -1,17 +1,26 @@
 import { Buffer } from 'buffer';
 
-// While Vite maps the mode that the application is running in by setting either the
-// `PROD` or `DEV` variables, we also need to ensure that `NODE_ENV` is set correctly
-// because we also use third-party libraries within the browser (such as Apollo Client),
-// that might expect it.
-//
-// @ts-expect-error - support third-party libraries that require `NODE_ENV`.
-globalThis.process = {
-  env: {
-    NODE_ENV: import.meta.env.MODE, // Map `MODE` to `process.env.NODE_ENV`.
-  },
+// Browser polyfills must be set before any dependency (e.g. crypto-browserify /
+// readable-stream) reads from `process` or `Buffer`.
+if (!globalThis.process) {
+  // @ts-expect-error partial process stub for browser libraries
+  globalThis.process = {};
+}
+
+const proc = globalThis.process as NodeJS.Process & {
+  browser?: boolean;
+  version?: string;
 };
 
-// We'll also make use of `Buffer` objects, so we'll ensure a pollyfill for one is
-// present on the global object.
+proc.env = {
+  ...proc.env,
+  NODE_ENV: import.meta.env.MODE,
+};
+if (!proc.version) {
+  proc.version = 'v18.0.0';
+}
+if (proc.browser === undefined) {
+  proc.browser = true;
+}
+
 globalThis.Buffer = Buffer;

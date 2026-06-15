@@ -1,24 +1,21 @@
 import {
   type BatcherConfig,
   FileStorage,
-  MidnightAdapter,
-} from "@paimaexample/batcher";
-import { readMidnightContract } from "@paimaexample/midnight-contracts/read-contract";
-import { midnightNetworkConfig } from "@paimaexample/midnight-contracts/midnight-env";
-import * as path from "@std/path";
-// import { MidnightBalancingAdapter } from "./adapters/midnight-balancing-adapter.ts";
-import { MidnightBalancingAdapter } from "@paimaexample/batcher";
-import process from "node:process";
+  type DefaultBatcherInput,
+} from "@effectstream/batcher-sdk";
+import { readMidnightContract } from "@effectstream/midnight-contracts/read-contract";
+import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
+import * as path from "node:path";
+
 const batchIntervalMs = 1000;
-const port = Number(Deno.env.get("BATCHER_PORT") ?? "3334");
+const port = Number(process.env.BATCHER_PORT ?? "3334");
 
 // Try to load contract data (needed for the standard midnight adapter).
 // May fail if the contract hasn't been deployed yet (no address JSON file).
-let midnightContractData: ReturnType<typeof readMidnightContract> | null = null;
 try {
-  midnightContractData = readMidnightContract(
+  readMidnightContract(
     "contract-pvp",
-    { 
+    {
       baseDir: path.resolve(import.meta.dirname!, "..", "midnight"),
       networkId: midnightNetworkConfig.id,
     },
@@ -34,73 +31,14 @@ try {
   throw e;
 }
 
-
-// Resolve zkConfigPath for the balancing adapter independently of the address file.
-// The balancing adapter only needs the ZK keys/ZKIR, not the contract address.
-const zkConfigPath = midnightContractData?.zkConfigPath ??
-  path.resolve(
-    import.meta.dirname!,
-    "..", "midnight","contract-pvp", "src", "managed"
-  );
-
-// const midnightAdapter = new MidnightAdapter(
-//     midnightContractData.contractAddress,
-//     midnightNetworkConfig.walletSeed!,
-//     {
-//       indexer: midnightNetworkConfig.indexer,
-//       indexerWS: midnightNetworkConfig.indexerWS,
-//       node: midnightNetworkConfig.node,
-//       proofServer: midnightNetworkConfig.proofServer,
-//       zkConfigPath: midnightContractData.zkConfigPath,
-//       privateStateStoreName: "pvp-private-state",
-//       privateStateId: "pvpPrivateState",
-//       contractJoinTimeoutSeconds: 300,
-//       walletFundingTimeoutSeconds: 300,
-//       walletNetworkId: midnightNetworkConfig.id,
-//     },
-//     new Contract(witnesses),
-//     witnesses,
-//     midnightContractData.contractInfo,
-//     "parallelMidnight",
-//   );
-
-// The balancing adapter handles delegated transactions from BatcherClient.
-let seeds = process.env.MIDNIGHT_WALLET_SEEDS?.split(',');
-if (midnightNetworkConfig.id === 'undeployed') {
-  seeds = [midnightNetworkConfig.walletSeed!];
-} else {
-  if (!seeds || seeds.length === 0) {
-    throw new Error('MIDNIGHT_WALLET_SEEDS is not set');
-  }
-}
-const midnightBalancingAdapter = new MidnightBalancingAdapter(
-    seeds,
-    {
-      syncProtocolName: 'parallelMidnight',
-      indexer: midnightNetworkConfig.indexer,
-      indexerWS: midnightNetworkConfig.indexerWS,
-      node: midnightNetworkConfig.node,
-      proofServer: midnightNetworkConfig.proofServer,
-      walletNetworkId: midnightNetworkConfig.id,
-      walletFundingTimeoutSeconds: 60 * 20,
-      addShieldedPadding: false, // true,
-    },
-  );
-
-export const config: BatcherConfig = {
+export const config: BatcherConfig<DefaultBatcherInput> = {
   pollingIntervalMs: batchIntervalMs,
-  adapters: {
-    // ...({ midnight: midnightAdapter }),
-    ...({ midnight_balancing: midnightBalancingAdapter }),
-  },
-  defaultTarget: "midnight_balancing",
-  namespace: "",
-  batchingCriteria: {
-    // ...({ midnight: { criteriaType: "time", timeWindowMs: batchIntervalMs } }),
-    ...({ midnight_balancing: { criteriaType: "time", timeWindowMs: batchIntervalMs } }),
-  },
-  confirmationLevel: "wait-effectstream-processed", // Connector expectation
   enableHttpServer: true,
+  // Must match the node's setSecurityNamespace(...) and any signed batcher clients.
+  namespace: "pvp-arena",
+  confirmationLevel: {
+    midnight_balancing: "no-wait",
+  },
   enableEventSystem: true,
   port,
 };
@@ -169,21 +107,21 @@ export function validateAndPrintBatcherEnv(): void {
     {
       name: "MIDNIGHT_NETWORK_ID",
       value: networkId,
-      isSet: !!Deno.env.get("MIDNIGHT_NETWORK_ID"),
+      isSet: !!process.env.MIDNIGHT_NETWORK_ID,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_WALLET_SEED",
-      value: Deno.env.get("MIDNIGHT_WALLET_SEED") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_WALLET_SEED"),
+      value: process.env.MIDNIGHT_WALLET_SEED ?? "",
+      isSet: !!process.env.MIDNIGHT_WALLET_SEED,
       secret: true,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_WALLET_MNEMONIC",
-      value: Deno.env.get("MIDNIGHT_WALLET_MNEMONIC") ?? "",
-      isSet: !!Deno.env.get("MIDNIGHT_WALLET_MNEMONIC")?.trim(),
+      value: process.env.MIDNIGHT_WALLET_MNEMONIC ?? "",
+      isSet: !!process.env.MIDNIGHT_WALLET_MNEMONIC?.trim(),
       secret: true,
       requiredWhenDeployed: false,
     },
@@ -197,35 +135,35 @@ export function validateAndPrintBatcherEnv(): void {
     {
       name: "MIDNIGHT_INDEXER_HTTP",
       value: midnightNetworkConfig.indexer,
-      isSet: !!Deno.env.get("MIDNIGHT_INDEXER_HTTP"),
+      isSet: !!process.env.MIDNIGHT_INDEXER_HTTP,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_INDEXER_WS",
       value: midnightNetworkConfig.indexerWS,
-      isSet: !!Deno.env.get("MIDNIGHT_INDEXER_WS"),
+      isSet: !!process.env.MIDNIGHT_INDEXER_WS,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_NODE_HTTP",
       value: midnightNetworkConfig.node,
-      isSet: !!Deno.env.get("MIDNIGHT_NODE_HTTP"),
+      isSet: !!process.env.MIDNIGHT_NODE_HTTP,
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "MIDNIGHT_PROOF_SERVER_URL",
       value: midnightNetworkConfig.proofServer,
-      isSet: !!(Deno.env.get("MIDNIGHT_PROOF_SERVER_URL") || Deno.env.get("MIDNIGHT_PROOF_SERVER")),
+      isSet: !!(process.env.MIDNIGHT_PROOF_SERVER_URL || process.env.MIDNIGHT_PROOF_SERVER),
       secret: false,
       requiredWhenDeployed: false,
     },
     {
       name: "BATCHER_PORT",
       value: String(port),
-      isSet: !!Deno.env.get("BATCHER_PORT"),
+      isSet: !!process.env.BATCHER_PORT,
       secret: false,
       requiredWhenDeployed: false,
     },
@@ -248,6 +186,6 @@ export function validateAndPrintBatcherEnv(): void {
 
   if (isDeployed && errors.length > 0) {
     for (const err of errors) console.error(err);
-    Deno.exit(1);
+    process.exit(1);
   }
 }

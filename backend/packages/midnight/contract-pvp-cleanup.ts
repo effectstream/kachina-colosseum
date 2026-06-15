@@ -26,7 +26,8 @@
  */
 
 import { Buffer } from "node:buffer";
-import * as path from "@std/path";
+import * as path from "node:path";
+import { readFileSync } from "node:fs";
 
 import { setNetworkId } from "npm:@midnight-ntwrk/midnight-js-network-id@4.0.2";
 import { findDeployedContract } from "npm:@midnight-ntwrk/midnight-js-contracts@4.0.2";
@@ -43,10 +44,10 @@ import { indexerPublicDataProvider } from "npm:@midnight-ntwrk/midnight-js-index
 import { levelPrivateStateProvider } from "npm:@midnight-ntwrk/midnight-js-level-private-state-provider@4.0.2";
 import { NodeZkConfigProvider } from "npm:@midnight-ntwrk/midnight-js-node-zk-config-provider@4.0.2";
 
-import { midnightNetworkConfig } from "jsr:@paimaexample/midnight-contracts/midnight-env";
+import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
 import {
   buildWalletFacade,
-} from "jsr:@paimaexample/midnight-contracts";
+} from "@effectstream/midnight-contracts";
 import {
   Contract,
   createPVPArenaPrivateState,
@@ -57,18 +58,18 @@ import {
 // Constants
 // ============================================================================
 
-const BATCHER_URL = Deno.env.get("BATCHER_URL") || "http://localhost:3334";
+const BATCHER_URL = process.env.BATCHER_URL || "http://localhost:3334";
 const DELEGATED_TX_SENTINEL = "delegated-to-batcher";
 
 // ============================================================================
 // Parse arguments
 // ============================================================================
 
-const matchIdArg = Deno.args[0];
+const matchIdArg = process.argv[2];
 if (!matchIdArg) {
   console.error("Usage: contract-pvp-cleanup.ts <match_id>");
   console.error("  match_id: The match ID (bigint or 0x-prefixed hex) to clean up");
-  Deno.exit(1);
+  process.exit(1);
 }
 
 /**
@@ -98,7 +99,7 @@ console.log(`Match ID to clean up: ${matchId}`);
 // ============================================================================
 
 function getBackendSecret(): Uint8Array {
-  const raw = Deno.env.get("MIDNIGHT_BACKEND_SECRET")!;
+  const raw = process.env.MIDNIGHT_BACKEND_SECRET!;
   if (/^[0-9a-fA-F]{64}$/.test(raw)) {
     return new Uint8Array(Buffer.from(raw, "hex"));
   }
@@ -116,7 +117,7 @@ function loadContractAddress(): string {
   const here = path.dirname(path.fromFileUrl(import.meta.url));
   const networkId = midnightNetworkConfig.id;
   const filePath = path.join(here, `contract-pvp.${networkId}.json`);
-  const data = JSON.parse(Deno.readTextFileSync(filePath));
+  const data = JSON.parse(readFileSync(filePath, "utf8"));
   if (!data.contractAddress) {
     throw new Error(`No contractAddress found in ${filePath}`);
   }
@@ -174,7 +175,7 @@ try {
   console.log("Proof server: OK");
 } catch {
   console.error(`Proof server not running at ${NETWORK.proofServer}`);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 // Check batcher
@@ -184,12 +185,12 @@ try {
   console.log(`Batcher: OK (${BATCHER_URL})`);
 } catch {
   console.error(`Batcher not running at ${BATCHER_URL}`);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 // Build wallet (keys only — batcher handles balancing/dust)
 console.log("\n--- Building wallet (keys only, batcher handles balancing) ---");
-const walletSeed = Deno.env.get("MIDNIGHT_CLEAN_SEED")!;
+const walletSeed = process.env.MIDNIGHT_CLEAN_SEED!;
 const walletResult = await buildWalletFacade(NETWORK as any, walletSeed, networkId);
 console.log(`Unshielded address: ${walletResult.unshieldedAddress}`);
 
@@ -314,7 +315,7 @@ const providers: MidnightProviders = {
     midnightDbName: "midnight-level-db-pvp-cleanup",
     privateStateStoreName: "pvp-private-state-cleanup",
     signingKeyStoreName: "pvp-signing-keys-cleanup",
-    privateStoragePasswordProvider: async () => Deno.env.get("MIDNIGHT_STORAGE_PASSWORD") ?? "YourPasswordMy1!",
+    privateStoragePasswordProvider: async () => process.env.MIDNIGHT_STORAGE_PASSWORD ?? "YourPasswordMy1!",
     accountId: Buffer.from(walletResult.zswapSecretKeys.coinPublicKey).toString("hex"),
   }),
   publicDataProvider,
@@ -349,10 +350,10 @@ try {
   console.log(`cleanup_match(${matchId}) succeeded — match ledger entries removed.`);
 } catch (err) {
   console.error("cleanup_match() failed:", err instanceof Error ? err.message : err);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 // Cleanup
 await walletResult.wallet.stop();
 console.log("Done.");
-Deno.exit(0);
+process.exit(0);

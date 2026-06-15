@@ -12,7 +12,8 @@
  */
 
 import { Buffer } from "node:buffer";
-import * as path from "jsr:@std/path@1";
+import * as path from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
 
 import { setNetworkId } from "npm:@midnight-ntwrk/midnight-js-network-id@4.0.0-rc.2";
 import { deployContract, findDeployedContract } from "npm:@midnight-ntwrk/midnight-js-contracts@4.0.0-rc.2";
@@ -29,14 +30,14 @@ import { indexerPublicDataProvider } from "npm:@midnight-ntwrk/midnight-js-index
 import { levelPrivateStateProvider } from "npm:@midnight-ntwrk/midnight-js-level-private-state-provider@4.0.0-rc.2";
 import { NodeZkConfigProvider } from "npm:@midnight-ntwrk/midnight-js-node-zk-config-provider@4.0.0-rc.2";
 
-import { midnightNetworkConfig } from "jsr:@paimaexample/midnight-contracts/midnight-env";
+import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
 import {
   buildWalletFacade,
   syncAndWaitForFunds,
   registerNightForDust,
   waitForDustFunds,
   type WalletResult,
-} from "jsr:@paimaexample/midnight-contracts";
+} from "@effectstream/midnight-contracts";
 
 import {
   Contract,
@@ -61,8 +62,8 @@ function createTtl(): Date {
 }
 
 function loadWalletSeed(): string {
-  const mnemonic = Deno.env.get("MIDNIGHT_WALLET_MNEMONIC");
-  const seed = Deno.env.get("MIDNIGHT_WALLET_SEED");
+  const mnemonic = process.env.MIDNIGHT_WALLET_MNEMONIC;
+  const seed = process.env.MIDNIGHT_WALLET_SEED;
   if (seed) return seed;
   if (!mnemonic) {
     throw new Error("Set MIDNIGHT_WALLET_MNEMONIC or MIDNIGHT_WALLET_SEED");
@@ -91,7 +92,7 @@ try {
   console.log("Proof server: OK");
 } catch {
   console.error(`Proof server not running at ${midnightNetworkConfig.proofServer}`);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 const NETWORK = {
@@ -164,7 +165,7 @@ const providers: MidnightProviders = {
     midnightDbName: "midnight-level-db-token-mint",
     privateStateStoreName: "token-mint-private-state",
     signingKeyStoreName: "token-mint-signing-keys",
-    privateStoragePasswordProvider: async () => Deno.env.get("MIDNIGHT_STORAGE_PASSWORD") ?? "YourPasswordMy1!",
+    privateStoragePasswordProvider: async () => process.env.MIDNIGHT_STORAGE_PASSWORD ?? "YourPasswordMy1!",
     accountId: Buffer.from(walletResult.zswapSecretKeys.coinPublicKey).toString("hex"),
   }),
   publicDataProvider: indexerPublicDataProvider(NETWORK.indexer, NETWORK.indexerWS),
@@ -189,7 +190,7 @@ const outputPath = path.join(here, `contract-token-mint.${networkId}.json`);
 // Check if already deployed
 let contractAddress: string;
 try {
-  const existing = JSON.parse(await Deno.readTextFile(outputPath));
+  const existing = JSON.parse(await readFile(outputPath, "utf8"));
   if (existing.contractAddress) {
     contractAddress = existing.contractAddress;
     console.log(`\n--- Contract already deployed at: ${contractAddress} (skipping deploy) ---`);
@@ -210,7 +211,7 @@ try {
   contractAddress = deployedContract.deployTxData.public.contractAddress;
   console.log(`Contract deployed at: ${contractAddress}`);
 
-  await Deno.writeTextFile(outputPath, JSON.stringify({ contractAddress }, null, 2));
+  await writeFile(outputPath, JSON.stringify({ contractAddress }, null, 2));
   console.log(`Address saved to: ${outputPath}`);
 }
 
@@ -254,4 +255,4 @@ console.log(`  Recipient: wallet-1 (deployer)`);
 // Cleanup
 await walletResult.wallet.stop();
 console.log("\nDone. 100M shielded tokens minted to wallet-1.");
-Deno.exit(0);
+process.exit(0);

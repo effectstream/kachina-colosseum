@@ -16,7 +16,8 @@
  */
 
 import { Buffer } from "node:buffer";
-import * as path from "@std/path";
+import * as path from "node:path";
+import { readFileSync } from "node:fs";
 
 import { setNetworkId } from "npm:@midnight-ntwrk/midnight-js-network-id@4.0.2";
 import { findDeployedContract } from "npm:@midnight-ntwrk/midnight-js-contracts@4.0.2";
@@ -33,13 +34,13 @@ import { indexerPublicDataProvider } from "npm:@midnight-ntwrk/midnight-js-index
 import { levelPrivateStateProvider } from "npm:@midnight-ntwrk/midnight-js-level-private-state-provider@4.0.2";
 import { NodeZkConfigProvider } from "npm:@midnight-ntwrk/midnight-js-node-zk-config-provider@4.0.2";
 
-import { midnightNetworkConfig } from "jsr:@paimaexample/midnight-contracts/midnight-env";
+import { midnightNetworkConfig } from "@effectstream/midnight-contracts/midnight-env";
 import {
   buildWalletFacade,
   syncAndWaitForFunds,
   registerNightForDust,
   waitForDustFunds,
-} from "jsr:@paimaexample/midnight-contracts";
+} from "@effectstream/midnight-contracts";
 import {
   Contract,
   createPVPArenaPrivateState,
@@ -61,7 +62,7 @@ function createTtl(): Date {
 // ============================================================================
 
 function getBackendSecret(): Uint8Array {
-  const raw = Deno.env.get("MIDNIGHT_BACKEND_SECRET") ?? "MIDNIGHT_BACKEND_SECRET";
+  const raw = process.env.MIDNIGHT_BACKEND_SECRET ?? "MIDNIGHT_BACKEND_SECRET";
   // If it looks like hex (64 chars), decode it; otherwise use UTF-8 bytes padded/truncated to 32
   if (/^[0-9a-fA-F]{64}$/.test(raw)) {
     return new Uint8Array(Buffer.from(raw, "hex"));
@@ -80,7 +81,7 @@ function loadContractAddress(): string {
   const here = path.dirname(path.fromFileUrl(import.meta.url));
   const networkId = midnightNetworkConfig.id;
   const filePath = path.join(here, `contract-pvp.${networkId}.json`);
-  const data = JSON.parse(Deno.readTextFileSync(filePath));
+  const data = JSON.parse(readFileSync(filePath, "utf8"));
   if (!data.contractAddress) {
     throw new Error(`No contractAddress found in ${filePath}`);
   }
@@ -119,10 +120,10 @@ const witnesses = {
 const networkId = midnightNetworkConfig.id as import("npm:@midnight-ntwrk/wallet-sdk-abstractions@2.0.0").NetworkId.NetworkId;
 if (midnightNetworkConfig.id === "mainnet") {
   // We require to set a custom RPC
-  if (!Deno.env.get("MIDNIGHT_NODE_URL")) {
-   throw new Error("MIDNIGHT_NODE_URL is not set");
+  if (!process.env.MIDNIGHT_NODE_URL) {
+    throw new Error("MIDNIGHT_NODE_URL is not set");
   }
-  midnightNetworkConfig.node = Deno.env.get("MIDNIGHT_NODE_URL")!;
+  midnightNetworkConfig.node = process.env.MIDNIGHT_NODE_URL!;
  }
 
 setNetworkId(networkId);
@@ -147,7 +148,7 @@ try {
   console.log("Proof server: OK");
 } catch {
   console.error(`Proof server not running at ${NETWORK.proofServer}`);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 // Build wallet
@@ -204,7 +205,7 @@ const providers: MidnightProviders = {
     midnightDbName: "midnight-level-db-pvp-initialize",
     privateStateStoreName: "pvp-private-state-initialize",
     signingKeyStoreName: "pvp-signing-keys-initialize",
-    privateStoragePasswordProvider: async () => Deno.env.get("MIDNIGHT_STORAGE_PASSWORD") ?? "YourPasswordMy1!",
+    privateStoragePasswordProvider: async () => process.env.MIDNIGHT_STORAGE_PASSWORD ?? "YourPasswordMy1!",
     accountId: Buffer.from(walletResult.zswapSecretKeys.coinPublicKey).toString("hex"),
   }),
   publicDataProvider: indexerPublicDataProvider(NETWORK.indexer, NETWORK.indexerWS),
@@ -239,10 +240,10 @@ try {
   console.log("initialize() succeeded — owner is now set.");
 } catch (err) {
   console.error("initialize() failed:", err instanceof Error ? err.message : err);
-  Deno.exit(1);
+  process.exit(1);
 }
 
 // Cleanup
 await walletResult.wallet.stop();
 console.log("Done.");
-Deno.exit(0);
+process.exit(0);

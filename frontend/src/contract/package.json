@@ -12,6 +12,9 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.15.0"
+  },
   "scripts": {
     "compact": "echo 'Contract is compiled by the backend. Run deno task build:midnight from backend/ first.'",
     "test": "jest --passWithNoTests",
