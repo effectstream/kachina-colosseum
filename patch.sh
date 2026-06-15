@@ -166,5 +166,29 @@ for dir in ./node_modules/.bun/fetch-blob@3.2.0/node_modules/fetch-blob/ ./node_
 done
 
 echo "✅ All patches applied successfully"
+
+# Apply @seriousme/opifex (MQTT engine) socket-close patch.
+# Under bun, WritableStreamDefaultWriter.close() on an already-closed/errored
+# stream REJECTS asynchronously instead of throwing synchronously, so the
+# library's try/catch around `this.writer.close()` misses it. The escaped
+# rejection is fatal (effection's main() tears down the node -> exit 1) and
+# crash-loops the node every MQTT reconnect. Attach a .catch to swallow it.
+echo "Patching @seriousme/opifex socket close()..."
+
+patch_opifex_socket() {
+    local socket_file="$1"
+    if [[ -f "$socket_file" ]]; then
+        replace_complex_content "$socket_file" "                this.writer.close();" "                Promise.resolve(this.writer.close()).catch(() => {});"
+    fi
+}
+
+shopt -s nullglob
+for f in ./node_modules/.bun/@seriousme+opifex@*/node_modules/@seriousme/opifex/dist/socket/socket.js \
+         ./node_modules/@seriousme/opifex/dist/socket/socket.js ; do
+    patch_opifex_socket "$f"
+done
+shopt -u nullglob
+
+echo "✅ All patches applied successfully"
         
         
