@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A --unstable-detect-cjs
+#!/usr/bin/env bun
 /**
  * Token Mint: Deploy + Mint 100M shielded tokens to the caller (wallet-1).
  *
@@ -6,7 +6,7 @@
  *   MIDNIGHT_NETWORK_ID=preview \
  *   MIDNIGHT_STORAGE_PASSWORD="YourPasswordMy1!" \
  *   MIDNIGHT_WALLET_MNEMONIC="word1 word2 ..." \
- *   deno run -A --unstable-detect-cjs token-mint-deploy.ts
+ *   bun run backend/packages/midnight/token-mint-deploy.ts
  *
  * The proof server must be running locally at http://127.0.0.1:6300.
  */

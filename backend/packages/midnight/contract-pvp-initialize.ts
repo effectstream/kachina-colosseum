@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A --unstable-detect-cjs
+#!/usr/bin/env bun
 /**
  * Initialize the PVP Arena contract owner.
  *
@@ -12,7 +12,7 @@
  *   MIDNIGHT_NETWORK_ID=undeployed \
  *   MIDNIGHT_STORAGE_PASSWORD="YourPasswordMy1!" \
  *   MIDNIGHT_BACKEND_SECRET="<hex-or-string>" \
- *   deno run -A --unstable-detect-cjs contract-pvp-initialize.ts
+ *   bun run backend/packages/midnight/contract-pvp-initialize.ts
  */
 
 import { Buffer } from "node:buffer";

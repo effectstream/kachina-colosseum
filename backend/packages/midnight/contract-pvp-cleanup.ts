@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A --unstable-detect-cjs
+#!/usr/bin/env bun
 /**
  * Clean up a finished PVP Arena match.
  *
@@ -17,7 +17,7 @@
  *   MIDNIGHT_BACKEND_SECRET="<hex-or-string>" \
  *   MIDNIGHT_CLEAN_SEED="<seed>" \
  *   BATCHER_URL="http://localhost:3334" \
- *   deno run -A --unstable-detect-cjs contract-pvp-cleanup.ts <match_id>
+ *   bun run backend/packages/midnight/contract-pvp-cleanup.ts <match_id>
  *
  * Arguments:
  *   match_id  The match ID (bigint or hex) to clean up

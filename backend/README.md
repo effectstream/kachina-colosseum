@@ -1,20 +1,38 @@
-IMPORTANT
-- Provide a dolos binary in ./cardano-effectstream-local/packages/cardano/dolos
-- Provide a yaci-cli binary in $HOME/.yaci-cli/yaci-cli
+# Backend
+
+EffectStream sync node, Midnight contract tooling, and transaction batcher.
+
+## Quick start
+
+From the **repository root**:
 
 ```sh
-deno install --allow-scripts && ./patch.sh
-deno task -f @pvp-arena-backend/midnight-contract-counter-basic contract:compile
-deno task -f @pvp-arena-backend/node dev
+bun install
+bun run build:midnight   # first time, or after contract changes
+bun run dev
 ```
 
+Typecheck:
 
-This type of log is expected.
-This means both midnight and utxorpc are syncing, and generating effectstream blocks.
+```sh
+bun run check
 ```
-00:15:13 INFO   effectstream-sync: [Midnight:undeployed] Fetching blocks from 11 to 11. 
-00:15:13 INFO   effectstream-sync-ntp-mainNtp: [26]
-00:15:13 INFO   effectstream-sync: [UTXORPC] Fetching blocks from 78 to 78. 
-00:15:13 INFO   effectstream-sync-block-merge: producing block 26
-00:15:13 INFO   effectstream-sync-block-merge: finalized block 26 @ 0x62909d... | {"mainNtp":[26,26],"parallelUtxoRpc":[77,77],"parallelMidnight":[10
+
+## Midnight scripts
+
+Run from the repo root via the midnight-contracts workspace package:
+
+```sh
+bun run --filter @pvp-arena-backend/midnight-contracts contract-pvp:deploy:dev
+bun run --filter @pvp-arena-backend/midnight-contracts contract-pvp:initialize:dev
+bun run --filter @pvp-arena-backend/midnight-contracts faucet
+```
+
+## Expected logs
+
+When syncing, you should see effectstream blocks being produced:
+
+```
+INFO   effectstream-sync: [Midnight:undeployed] Fetching blocks from 11 to 11.
+INFO   effectstream-sync-block-merge: finalized block 26 @ 0x62909d...
 ```

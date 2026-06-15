@@ -30,7 +30,7 @@ import type { DefaultV1Configuration } from "@midnight-ntwrk/wallet-sdk-shielded
  * This is useful to pass dust to Lace wallets in the browser for testing purposes.
  *
  * Usage:
- * MIDNIGHT_ADDRESS=mn_addr_undeployed1k7dst6qphntqmypwa4mhyltk794wx4lt07kherlc9y6clu5swssxqr9xe4z7txy8rscldhec7nmm47ujccf7syky0wz86jwahhkfd3mvq9wu8qx deno run -A faucet.ts
+ * MIDNIGHT_ADDRESS=mn_addr_... bun run --filter @pvp-arena-backend/midnight-contracts faucet
  */
 
 // ============================================================================
@@ -880,7 +880,7 @@ if (import.meta.main) {
   if (!midnightAddress) {
     console.error("❌ MIDNIGHT_ADDRESS environment variable is not set");
     console.error(
-      "Example: MIDNIGHT_ADDRESS=mn_addr_undeployed1k7dst6qphntqmypwa4mhyltk794wx4lt07kherlc9y6clu5swssxqr9xe4z7txy8rscldhec7nmm47ujccf7syky0wz86jwahhkfd3mvq9wu8qx deno run -A faucet.ts",
+      "Example: MIDNIGHT_ADDRESS=mn_addr_... bun run --filter @pvp-arena-backend/midnight-contracts faucet",
     );
     process.exit(1);
   }

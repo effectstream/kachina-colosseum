@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env bun
 /**
  * Midnight Wallet CLI
  *
@@ -297,7 +297,6 @@ async function fetchSingleBalance(w: StoredWallet): Promise<WalletBalanceResult>
 
     // Dust balance & UTXOs
     try {
-      // deno-lint-ignore no-explicit-any
       const dustState: any = await Rx.firstValueFrom((walletFacade.wallet as any).dust.state);
       if (typeof dustState.balance === "function") {
         result.dustBalance = dustState.balance(new Date());
@@ -309,14 +308,12 @@ async function fetchSingleBalance(w: StoredWallet): Promise<WalletBalanceResult>
 
     // Shielded UTXOs
     try {
-      // deno-lint-ignore no-explicit-any
       const shieldedState: any = await Rx.firstValueFrom((walletFacade.wallet as any).shielded.state);
       if (shieldedState.availableCoins) result.shieldedUtxos = shieldedState.availableCoins.length;
     } catch (_e) { /* ignore */ }
 
     // Unshielded UTXOs
     try {
-      // deno-lint-ignore no-explicit-any
       const unshieldedState: any = await Rx.firstValueFrom((walletFacade.wallet as any).unshielded.state);
       if (unshieldedState.availableCoins) result.unshieldedUtxos = unshieldedState.availableCoins.length;
     } catch (_e) { /* ignore */ }
@@ -500,17 +497,14 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
   });
 
   // Get synced state and find unregistered UTXOs
-  // deno-lint-ignore no-explicit-any
   const state: any = await Rx.firstValueFrom(
     walletResult.wallet.state().pipe(
-      // deno-lint-ignore no-explicit-any
       Rx.filter((s: any) => s.isSynced),
     ),
   );
 
   const allCoins = state.unshielded?.availableCoins ?? [];
   const unregistered = allCoins.filter(
-    // deno-lint-ignore no-explicit-any
     (coin: any) => coin.meta.registeredForDustGeneration === false,
   );
 
@@ -522,7 +516,6 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
     console.log("\nAll Night UTXOs are already registered for dust generation.");
 
     // Show current dust balance
-    // deno-lint-ignore no-explicit-any
     const dustState: any = await Rx.firstValueFrom((walletResult.wallet as any).dust.state);
     const dustBalance = typeof dustState.balance === "function" ? dustState.balance(new Date()) : 0n;
     console.log(`Current dust balance: ${dustBalance}`);
@@ -540,7 +533,6 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
 
   try {
     // Build registration args
-    // deno-lint-ignore no-explicit-any
     const registerArgs: any[] = [
       unregistered,
       walletResult.unshieldedKeystore.getPublicKey(),
@@ -550,29 +542,24 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
       registerArgs.push(targetDustAddress);
     }
 
-    // deno-lint-ignore no-explicit-any
     const recipe = await (walletResult.wallet as any).registerNightUtxosForDustGeneration(
       ...registerArgs,
     );
 
     // Use finalizeRecipe which handles dust registration specially (no dust fee needed)
-    // deno-lint-ignore no-explicit-any
     const finalizedTx = await (walletResult.wallet as any).finalizeRecipe(recipe);
     const txId = await walletResult.wallet.submitTransaction(finalizedTx);
     console.log(`\nDelegation transaction submitted! txId: ${txId}`);
 
     // Wait for dust to appear
     console.log("Waiting for dust to generate...");
-    // deno-lint-ignore no-explicit-any
     const newDustState: any = await Rx.firstValueFrom(
       (walletResult.wallet as any).dust.state.pipe(
         Rx.throttleTime(10_000),
-        // deno-lint-ignore no-explicit-any
         Rx.tap((s: any) => {
           const bal = typeof s.balance === "function" ? s.balance(new Date()) : 0n;
           console.log(`  dust balance: ${bal}`);
         }),
-        // deno-lint-ignore no-explicit-any
         Rx.filter((s: any) => {
           return s.availableCoins?.length > 0;
         }),
@@ -597,7 +584,7 @@ async function cmdDelegate(args: { name: string; to?: string }): Promise<void> {
 
 if (!process.env.MIDNIGHT_NETWORK_ID) {
   console.error("MIDNIGHT_NETWORK_ID is required. Example:");
-  console.error("  MIDNIGHT_NETWORK_ID=preprod deno run -A wallet-cli.ts <command>");
+  console.error("  MIDNIGHT_NETWORK_ID=preprod bun run backend/wallet-cli.ts <command>");
   process.exit(1);
 }
 
