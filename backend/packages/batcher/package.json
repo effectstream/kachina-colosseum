@@ -9,9 +9,9 @@
     "start": "bun run main.ts"
   },
   "dependencies": {
-    "@effectstream/batcher-sdk": "0.100.23",
-    "@effectstream/midnight-contracts": "0.100.23",
-    "@effectstream/utils": "0.100.23",
+    "@effectstream/batcher-sdk": "0.100.26",
+    "@effectstream/midnight-contracts": "0.100.26",
+    "@effectstream/utils": "0.100.26",
     "@midnight-ntwrk/compact-runtime": "0.15.0",
     "effection": "^3.5.0"
   }
