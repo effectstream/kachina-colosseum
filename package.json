@@ -26,9 +26,9 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.14",
-    "@effectstream/db": "0.100.27",
-    "@effectstream/midnight-contracts": "0.100.27",
-    "@effectstream/orchestrator": "0.100.27",
+    "@effectstream/db": "0.100.28",
+    "@effectstream/midnight-contracts": "0.100.28",
+    "@effectstream/orchestrator": "0.100.28",
     "wait-on": "8.0.3"
   },
   "devDependencies": {
